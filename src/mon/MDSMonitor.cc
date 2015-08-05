@@ -830,12 +830,13 @@ bool MDSMonitor::preprocess_command(MonOpRequestRef op)
 	mm.decode(b);
 	mm.encode(rdata, m->get_connection()->get_features());
 	ss << "got mdsmap epoch " << mm.get_epoch();
+	r = 0;
       }
     } else {
       mdsmap.encode(rdata, m->get_connection()->get_features());
       ss << "got mdsmap epoch " << mdsmap.get_epoch();
+      r = 0;
     }
-    r = 0;
   } else if (prefix == "mds tell") {
     string whostr;
     cmd_getval(g_ceph_context, cmdmap, "who", whostr);
@@ -1469,6 +1470,10 @@ int MDSMonitor::filesystem_command(
     if (!cmd_getval(g_ceph_context, cmdmap, "maxmds", maxmds) || maxmds < 0) {
       return -EINVAL;
     }
+    if (maxmds > MAX_MDS) {
+      ss << "may not have more than " << MAX_MDS << " MDS ranks";
+      return -EINVAL;
+    }
     pending_mdsmap.max_mds = maxmds;
     r = 0;
     ss << "max_mds = " << pending_mdsmap.max_mds;
@@ -1490,6 +1495,10 @@ int MDSMonitor::filesystem_command(
       // NOTE: see also "mds set_max_mds", which can modify the same field.
       if (interr.length()) {
 	return -EINVAL;
+      }
+      if (n > MAX_MDS) {
+        ss << "may not have more than " << MAX_MDS << " MDS ranks";
+        return -EINVAL;
       }
       pending_mdsmap.max_mds = n;
     } else if (var == "inline_data") {

@@ -68,7 +68,7 @@ OPTION(enable_experimental_unrecoverable_data_corrupting_features, OPT_STR, "")
 OPTION(xio_trace_mempool, OPT_BOOL, false) // mempool allocation counters
 OPTION(xio_trace_msgcnt, OPT_BOOL, false) // incoming/outgoing msg counters
 OPTION(xio_trace_xcon, OPT_BOOL, false) // Xio message encode/decode trace
-OPTION(xio_queue_depth, OPT_INT, 512) // depth of Accelio msg queue
+OPTION(xio_queue_depth, OPT_INT, 128) // depth of Accelio msg queue
 OPTION(xio_mp_min, OPT_INT, 128) // default min mempool size
 OPTION(xio_mp_max_64, OPT_INT, 65536) // max 64-byte chunks (buffer is 40)
 OPTION(xio_mp_max_256, OPT_INT, 8192) // max 256-byte chunks
@@ -77,6 +77,13 @@ OPTION(xio_mp_max_page, OPT_INT, 4096) // max 1K chunks
 OPTION(xio_mp_max_hint, OPT_INT, 4096) // max size-hint chunks
 OPTION(xio_portal_threads, OPT_INT, 2) // xio portal threads per messenger
 OPTION(xio_transport_type, OPT_STR, "rdma") // xio transport type: {rdma or tcp}
+OPTION(xio_max_send_inline, OPT_INT, 512) // xio maximum threshold to send inline
+
+OPTION(async_compressor_enabled, OPT_BOOL, false)
+OPTION(async_compressor_type, OPT_STR, "snappy")
+OPTION(async_compressor_threads, OPT_INT, 2)
+OPTION(async_compressor_thread_timeout, OPT_INT, 5)
+OPTION(async_compressor_thread_suicide_timeout, OPT_INT, 30)
 
 DEFAULT_SUBSYS(0, 5)
 SUBSYS(lockdep, 0, 1)
@@ -122,6 +129,7 @@ SUBSYS(asok, 1, 5)
 SUBSYS(throttle, 1, 1)
 SUBSYS(refs, 0, 0)
 SUBSYS(xio, 1, 5)
+SUBSYS(compressor, 1, 5)
 
 OPTION(key, OPT_STR, "")
 OPTION(keyfile, OPT_STR, "")
@@ -479,6 +487,9 @@ OPTION(mds_max_purge_ops, OPT_U32, 8192)
 // Maximum number of concurrent RADOS ops to issue in purging, scaled by PG count
 OPTION(mds_max_purge_ops_per_pg, OPT_FLOAT, 0.5)
 
+OPTION(mds_root_ino_uid, OPT_INT, 0) // The UID of / on new filesystems
+OPTION(mds_root_ino_gid, OPT_INT, 0) // The GID of / on new filesystems
+
 // If true, compact leveldb store on mount
 OPTION(osd_compact_leveldb_on_mount, OPT_BOOL, false)
 
@@ -568,6 +579,7 @@ OPTION(osd_tier_default_cache_hit_set_count, OPT_INT, 4)
 OPTION(osd_tier_default_cache_hit_set_period, OPT_INT, 1200)
 OPTION(osd_tier_default_cache_hit_set_type, OPT_STR, "bloom")
 OPTION(osd_tier_default_cache_min_read_recency_for_promote, OPT_INT, 1) // number of recent HitSets the object must appear in to be promoted (on read)
+OPTION(osd_tier_default_cache_min_write_recency_for_promote, OPT_INT, 1) // number of recent HitSets the object must appear in to be promoted (on write)
 
 OPTION(osd_map_dedup, OPT_BOOL, true)
 OPTION(osd_map_max_advance, OPT_INT, 200) // make this < cache_size!
