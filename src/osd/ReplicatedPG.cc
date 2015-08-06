@@ -1252,6 +1252,7 @@ void ReplicatedPG::do_request(
 	     << " flushes_in_progress pending "
 	     << "waiting for active on " << op << dendl;
     waiting_for_peered.push_back(op);
+    op->mark_delayed("waiting for peered");
     return;
   }
 
@@ -1263,6 +1264,7 @@ void ReplicatedPG::do_request(
       return;
     } else {
       waiting_for_peered.push_back(op);
+      op->mark_delayed("waiting for peered");
       return;
     }
   }
@@ -1276,6 +1278,7 @@ void ReplicatedPG::do_request(
     if (!is_active()) {
       dout(20) << " peered, not active, waiting for active on " << op << dendl;
       waiting_for_active.push_back(op);
+      op->mark_delayed("waiting for active");
       return;
     }
     if (is_replay()) {
@@ -10201,7 +10204,10 @@ void ReplicatedPG::hit_set_setup()
       !pool.info.hit_set_period ||
       pool.info.hit_set_params.get_type() == HitSet::TYPE_NONE) {
     hit_set_clear();
-    //hit_set_remove_all();  // FIXME: implement me soon
+    // only primary is allowed to remove all the hit set objects
+    if (is_primary()) {
+      hit_set_remove_all();
+    }
     return;
   }
 
@@ -10211,6 +10217,46 @@ void ReplicatedPG::hit_set_setup()
   // include any writes we know about from the pg log.  this doesn't
   // capture reads, but it is better than nothing!
   hit_set_apply_log();
+}
+
+void ReplicatedPG::hit_set_remove_all()
+{
+  // If any archives are degraded we skip this
+  for (list<pg_hit_set_info_t>::iterator p = info.hit_set.history.begin();
+       p != info.hit_set.history.end();
+       ++p) {
+    hobject_t aoid = get_hit_set_archive_object(p->begin, p->end);
+
+    // Once we hit a degraded object just skip
+    if (is_degraded_or_backfilling_object(aoid))
+      return;
+    if (scrubber.write_blocked_by_scrub(aoid))
+      return;
+  }
+
+  if (!info.hit_set.history.empty()) {
+    list<pg_hit_set_info_t>::reverse_iterator p = info.hit_set.history.rbegin();
+    assert(p != info.hit_set.history.rend());
+    hobject_t oid = get_hit_set_archive_object(p->begin, p->end);
+    assert(!is_degraded_or_backfilling_object(oid));
+    ObjectContextRef obc = get_object_context(oid, false);
+    assert(obc);
+
+    RepGather *repop = simple_repop_create(obc);
+    OpContext *ctx = repop->ctx;
+    ctx->at_version = get_next_version();
+    ctx->updated_hset_history = info.hit_set;
+    utime_t now = ceph_clock_now(cct);
+    ctx->mtime = now;
+    hit_set_trim(repop, 0);
+    info.stats.stats.add(ctx->delta_stats);
+    simple_repop_submit(repop);
+  }
+
+  info.hit_set = pg_hit_set_history_t();
+  if (agent_state) {
+    agent_state->discard_hit_sets();
+  }
 }
 
 void ReplicatedPG::hit_set_create()
@@ -10304,11 +10350,6 @@ void ReplicatedPG::hit_set_persist()
   hobject_t oid;
   time_t flush_time = 0;
 
-  // See what start is going to be used later
-  utime_t start = info.hit_set.current_info.begin;
-  if (!start)
-     start = hit_set_start_stamp;
-
   // If any archives are degraded we skip this persist request
   // account for the additional entry being added below
   for (list<pg_hit_set_info_t>::iterator p = info.hit_set.history.begin();
@@ -10323,10 +10364,10 @@ void ReplicatedPG::hit_set_persist()
       return;
   }
 
+  utime_t start = info.hit_set.current_info.begin;
+  if (!start)
+     start = hit_set_start_stamp;
   oid = get_hit_set_archive_object(start, now);
-  // If the current object is degraded we skip this persist request
-  if (is_degraded_or_backfilling_object(oid))
-    return;
   if (scrubber.write_blocked_by_scrub(oid))
     return;
 
