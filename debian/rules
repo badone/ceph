@@ -33,6 +33,13 @@ ifeq ($(DEB_HOST_ARCH), armel)
   extraopts += --without-libatomic-ops
 endif
 
+# systemd?
+export OLD_DISTRO = $(shell lsb_release -sc | egrep -c precise\|raring\|trusty\|vivid\|squeeze\|wheezy)
+export SYSTEMD = 0
+ifeq ($(OLD_DISTRO), 1)
+	export SYSTEMD = 1
+endif
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -51,10 +58,10 @@ build-stamp: configure-stamp
 
 	$(MAKE)
 
-	cp src/init-ceph debian/ceph.init
-	cp src/init-radosgw debian/radosgw.init
-	cp src/logrotate.conf debian/ceph.logrotate
-	cp src/rgw/logrotate.conf debian/radosgw.logrotate
+	[ $SYSTEMD -eq 0 ] && cp src/init-ceph debian/ceph.init
+	[ $SYSTEMD -eq 0 ] && cp src/init-radosgw debian/radosgw.init
+	[ $SYSTEMD -eq 0 ] && cp src/logrotate.conf debian/ceph.logrotate
+	[ $SYSTEMD -eq 0 ] && cp src/rgw/logrotate.conf debian/radosgw.logrotate
 
 	touch $@
 
@@ -82,9 +89,10 @@ install: build
 	sed -i "/dependency_libs/ s/'.*'/''/" `find . -name '*.la'`
 	install -D -m 644 udev/50-rbd.rules $(DESTDIR)/lib/udev/rules.d/50-rbd.rules
 	install -D -m 644 udev/60-ceph-partuuid-workaround.rules $(DESTDIR)/lib/udev/rules.d/60-ceph-partuuid-workaround.rules
-	install -D -m 644 udev/95-ceph-osd.rules $(DESTDIR)/lib/udev/rules.d/95-ceph-osd.rules
+	[ $SYSTEMD -eq 0 ] && install -D -m 644 udev/95-ceph-osd.rules $(DESTDIR)/lib/udev/rules.d/95-ceph-osd.rules
+	[ $SYSTEMD -eq 1 ] && install -D -m 644 udev/95-ceph-osd.rules.systemd $(DESTDIR)/lib/udev/rules.d/95-ceph-osd.rules
 	install -D -m 644 src/rbdmap $(DESTDIR)/etc/ceph/rbdmap
-	install -D -m 755 src/init-rbdmap $(DESTDIR)/etc/init.d/rbdmap
+	[ $SYSTEMD -eq 0 ] && install -D -m 755 src/init-rbdmap $(DESTDIR)/etc/init.d/rbdmap
 
 # Add here commands to install the package into debian/testpack.
 # Build architecture-independent files here.
@@ -120,14 +128,34 @@ binary-arch: build install
 	dh_installinit -a --no-start
 	# dh_installinit is only set up to handle one upstart script
 	# per package, so do this ourselves
-	install -d -m0755 debian/ceph/etc/init
-	install -m0644 src/upstart/ceph*.conf debian/ceph/etc/init
-	install -d -m0755 debian/ceph-common/etc/init
-	install -m0644 src/upstart/rbdmap.conf debian/ceph-common/etc/init
-	install -d -m0755 debian/ceph-mds/etc/init
-	mv debian/ceph/etc/init/ceph-mds* debian/ceph-mds/etc/init
-	install -d -m0755 debian/radosgw/etc/init
-	install -m0644 src/upstart/radosgw*.conf debian/radosgw/etc/init
+	[ $SYSTEMD -eq 0 ] && install -d -m0755 debian/ceph/etc/init
+	[ $SYSTEMD -eq 0 ] && install -m0644 src/upstart/ceph*.conf debian/ceph/etc/init
+	[ $SYSTEMD -eq 0 ] && install -d -m0755 debian/ceph-common/etc/init
+	[ $SYSTEMD -eq 0 ] && install -m0644 src/upstart/rbdmap.conf debian/ceph-common/etc/init
+	[ $SYSTEMD -eq 0 ] && install -d -m0755 debian/ceph-mds/etc/init
+	[ $SYSTEMD -eq 0 ] && mv debian/ceph/etc/init/ceph-mds* debian/ceph-mds/etc/init
+	[ $SYSTEMD -eq 0 ] && install -d -m0755 debian/radosgw/etc/init
+	[ $SYSTEMD -eq 0 ] && install -m0644 src/upstart/radosgw*.conf debian/radosgw/etc/init
+	# install the systemd stuff manually since we have funny service names
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/ceph-common/lib/systemd/service
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph.target debian/ceph-common/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/ceph/lib/systemd/service
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-mon@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-create-keys@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-osd@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-disk-activate@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-disk-activate-journal@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-disk-dmcrypt-activate@.service debian/ceph/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/ceph-mds/lib/systemd/service
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-mds@.service debian/ceph-mds/lib/systemd
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/radosgw/lib/systemd/service
+	[ $SYSTEMD -eq 1 ] && install -m0644 systemd/ceph-radosgw@.service debian/radosgw/lib/systemd
+
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/ceph-common/lib/tmpfiles.d
+	[ $SYSTEMD -eq 1 ] && install -m 0644 -D systemd/ceph.tmpfiles.d debian/ceph-common/lib/tmpfiles.d/ceph.conf
+	[ $SYSTEMD -eq 1 ] && install -d -m0755 debian/radosgw/lib/tmpfiles.d
+	[ $SYSTEMD -eq 1 ] && install -m 0644 -D systemd/ceph-rgw.tmpfiles.d debian/radosgw/lib/tmpfiles.d/ceph-rgw.conf
+
 	dh_installman -a
 	dh_lintian -a
 	dh_link -a
