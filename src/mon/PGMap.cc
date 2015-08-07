@@ -162,7 +162,6 @@ void PGMap::Incremental::generate_test_instances(list<PGMap::Incremental*>& o)
   o.back()->nearfull_ratio = .3;
   o.back()->pg_stat_updates[pg_t(4,5,6)] = pg_stat_t();
   o.back()->osd_stat_updates[6] = osd_stat_t();
-  o.back()->osd_epochs[6] = 12;
   o.back()->pg_remove.insert(pg_t(1,2,3));
   o.back()->osd_stat_rm.insert(5);
 }
