@@ -166,11 +166,14 @@ T strict_si_cast(const char *str, std::string *err)
     *err = "strict_sistrtoll: value should not be negative";
     return 0;
   }
-  if (ll < (long long)std::numeric_limits<T>::min() >> m) {
+  if (ll < static_cast<long long>(std::numeric_limits<T>::min()) >> m) {
     *err = "strict_sistrtoll: value seems to be too small";
     return 0;
   }
+  // The line below relies on the signed/unsigned comparison so suppress the warning
+#pragma GCC diagnostic ignored "-Wsign-compare"
   if (ll > std::numeric_limits<T>::max() >> m) {
+#pragma GCC diagnostic pop
     *err = "strict_sistrtoll: value seems to be too large";
     return 0;
 
