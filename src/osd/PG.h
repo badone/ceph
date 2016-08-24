@@ -1612,9 +1612,6 @@ public:
 	> reactions;
 
       boost::statechart::result react(const Load&);
-      boost::statechart::result react(const MNotifyRec&);
-      boost::statechart::result react(const MInfoRec&);
-      boost::statechart::result react(const MLogRec&);
       boost::statechart::result react(const boost::statechart::event_base&) {
 	return discard_event();
       }

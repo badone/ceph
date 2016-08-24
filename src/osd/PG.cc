@@ -5620,31 +5620,6 @@ boost::statechart::result PG::RecoveryState::Initial::react(const Load& l)
   return transit< Reset >();
 }
 
-boost::statechart::result PG::RecoveryState::Initial::react(const MNotifyRec& notify)
-{
-  PG *pg = context< RecoveryMachine >().pg;
-  pg->proc_replica_info(
-    notify.from, notify.notify.info, notify.notify.epoch_sent);
-  pg->set_last_peering_reset();
-  return transit< Primary >();
-}
-
-boost::statechart::result PG::RecoveryState::Initial::react(const MInfoRec& i)
-{
-  PG *pg = context< RecoveryMachine >().pg;
-  assert(!pg->is_primary());
-  post_event(i);
-  return transit< Stray >();
-}
-
-boost::statechart::result PG::RecoveryState::Initial::react(const MLogRec& i)
-{
-  PG *pg = context< RecoveryMachine >().pg;
-  assert(!pg->is_primary());
-  post_event(i);
-  return transit< Stray >();
-}
-
 void PG::RecoveryState::Initial::exit()
 {
   context< RecoveryMachine >().log_exit(state_name, enter_time);
