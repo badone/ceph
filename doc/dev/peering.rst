@@ -151,7 +151,11 @@ bound on *last epoch started*.
 
 The high level process is for the current PG primary to:
 
-  1. get a recent OSD map (to identify the members of the all
+  1. identify if we were the primary during the last interval and, if we were,
+     save a copy of the existing peer info and missing set data we have and
+     propagate it for reuse in the rest of the peering process
+
+  #. get a recent OSD map (to identify the members of the all
      interesting *acting sets*, and confirm that we are still the
      primary).
 
