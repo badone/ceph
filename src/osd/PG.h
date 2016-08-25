@@ -2309,7 +2309,8 @@ public:
     const OSDMapRef lastmap,
     const vector<int>& newup, int up_primary,
     const vector<int>& newacting, int acting_primary,
-    ObjectStore::Transaction *t);
+    ObjectStore::Transaction *t,
+    boost::optional<RecoveryState::PrimaryInfo> *saved_primary_info);
   void on_new_interval();
   virtual void _on_new_interval() = 0;
   void start_flush(ObjectStore::Transaction *t,

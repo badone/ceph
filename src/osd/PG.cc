@@ -4883,7 +4883,8 @@ void PG::start_peering_interval(
   const OSDMapRef lastmap,
   const vector<int>& newup, int new_up_primary,
   const vector<int>& newacting, int new_acting_primary,
-  ObjectStore::Transaction *t)
+  ObjectStore::Transaction *t,
+  boost::optional<RecoveryState::PrimaryInfo> *saved_primary_info)
 {
   const OSDMapRef osdmap = get_osdmap();
 
@@ -4989,6 +4990,15 @@ void PG::start_peering_interval(
 	   << ", features acting " << acting_features
 	   << " upacting " << upacting_features
 	   << dendl;
+
+  // if the primary has not changed save peer_info and peer_missing before they
+  // are clared otherwise clear saved_primary_info
+  if (was_old_primary && is_primary()) {
+    RecoveryState::PrimaryInfo pi(peer_info, peer_missing);
+    *saved_primary_info = std::move(pi);
+  } else {
+    *saved_primary_info = boost::none;
+  }
 
   // deactivate.
   state_clear(PG_STATE_ACTIVE);
@@ -5743,7 +5753,8 @@ boost::statechart::result PG::RecoveryState::Reset::react(const AdvMap& advmap)
       advmap.lastmap,
       advmap.newup, advmap.up_primary,
       advmap.newacting, advmap.acting_primary,
-      context< RecoveryMachine >().get_cur_transaction());
+      context< RecoveryMachine >().get_cur_transaction(),
+      &saved_primary_info);
   }
   pg->remove_down_peer_info(advmap.osdmap);
   return discard_event();
