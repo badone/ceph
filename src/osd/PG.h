@@ -1631,6 +1631,7 @@ public:
     struct Reset : boost::statechart::state< Reset, RecoveryMachine >, NamedState {
       explicit Reset(my_context ctx);
       void exit();
+      boost::optional<PrimaryInfo> saved_primary_info;
 
       typedef boost::mpl::list <
 	boost::statechart::custom_reaction< QueryState >,
