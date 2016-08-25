@@ -1617,6 +1617,17 @@ public:
       }
     };
 
+  public:
+    struct PrimaryInfo : boost::statechart::event< PrimaryInfo > {
+      map<pg_shard_t, pg_info_t>    peer_info;
+      map<pg_shard_t, pg_missing_t> peer_missing;
+      PrimaryInfo(
+          map<pg_shard_t, pg_info_t>    peer_info,
+          map<pg_shard_t, pg_missing_t> peer_missing):
+        peer_info(peer_info), peer_missing(peer_missing) {}
+    };
+  private:
+
     struct Reset : boost::statechart::state< Reset, RecoveryMachine >, NamedState {
       explicit Reset(my_context ctx);
       void exit();
