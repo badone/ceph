@@ -5777,6 +5777,11 @@ boost::statechart::result PG::RecoveryState::Reset::react(const ActMap&)
   pg->update_heartbeat_peers();
   pg->take_waiters();
 
+  // Send PrimaryInfo event
+  if (saved_primary_info) {
+    post_event(saved_primary_info.get());
+  }
+
   return transit< Started >();
 }
 
@@ -5973,6 +5978,18 @@ boost::statechart::result PG::RecoveryState::Peering::react(const QueryState& q)
 
   q.f->close_section();
   return forward_event();
+}
+
+boost::statechart::result PG::RecoveryState::Peering::react(const PrimaryInfo& primaryinfo)
+{
+  // Repopulate peer_info and peer_missing from PrimaryInfo event
+  dout(10) << "Repopulating peer_{info,missing} from PrimaryInfo event" << dendl;
+  // assert(context< RecoveryMachine >().pg->peer_info.empty()
+  //     && context< RecoveryMachine >().pg->peer_missing.empty());
+  context< RecoveryMachine >().pg->peer_info = primaryinfo.peer_info;
+  context< RecoveryMachine >().pg->peer_missing = primaryinfo.peer_missing;
+
+  return discard_event();
 }
 
 void PG::RecoveryState::Peering::exit()
