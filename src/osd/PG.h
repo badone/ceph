@@ -1751,6 +1751,7 @@ public:
 	> reactions;
       boost::statechart::result react(const QueryState& q);
       boost::statechart::result react(const AdvMap &advmap);
+      boost::statechart::result react(const PrimaryInfo& primaryinfo);
     };
 
     struct WaitLocalRecoveryReserved;
