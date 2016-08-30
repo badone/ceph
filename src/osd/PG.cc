@@ -5779,6 +5779,7 @@ boost::statechart::result PG::RecoveryState::Reset::react(const ActMap&)
 
   // Send PrimaryInfo event
   if (saved_primary_info) {
+    dout(20) << "Sending PrimaryInfo event" << dendl;
     post_event(saved_primary_info.get());
   }
 

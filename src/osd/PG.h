@@ -22,6 +22,7 @@
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/transition.hpp>
 #include <boost/statechart/event_base.hpp>
+#include <boost/statechart/deferral.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "include/memory.h"
 
@@ -1690,7 +1691,8 @@ public:
 
       typedef boost::mpl::list <
 	boost::statechart::transition< MakePrimary, Primary >,
-	boost::statechart::transition< MakeStray, Stray >
+	boost::statechart::transition< MakeStray, Stray >,
+	boost::statechart::deferral< PrimaryInfo >
 	> reactions;
     };
 
@@ -1748,7 +1750,8 @@ public:
       typedef boost::mpl::list <
 	boost::statechart::custom_reaction< QueryState >,
 	boost::statechart::transition< Activate, Active >,
-	boost::statechart::custom_reaction< AdvMap >
+	boost::statechart::custom_reaction< AdvMap >,
+	boost::statechart::custom_reaction< PrimaryInfo >
 	> reactions;
       boost::statechart::result react(const QueryState& q);
       boost::statechart::result react(const AdvMap &advmap);
