@@ -927,7 +927,7 @@ void PG::build_prior(std::unique_ptr<PriorSet> &prior_set)
   set_probe_targets(prior_set->probe);
 }
 
-void PG::clear_primary_state()
+void PG::clear_primary_state(const bool full)
 {
   dout(10) << "clear_primary_state" << dendl;
 
@@ -935,14 +935,23 @@ void PG::clear_primary_state()
   stray_set.clear();
   peer_log_requested.clear();
   peer_missing_requested.clear();
-  peer_info.clear();
-  peer_missing.clear();
   need_up_thru = false;
   peer_last_complete_ondisk.clear();
   peer_activated.clear();
   min_last_complete_ondisk = eversion_t();
   pg_trim_to = eversion_t();
   might_have_unfound.clear();
+
+  if (full) {
+    peer_info.clear();
+    peer_missing.clear();
+  } else {
+    dout(20) << "Not clearing peer_info and peer_missing" << dendl;
+    for_each( peer_info.begin(), peer_info.end(),
+              [this](const std::pair<pg_shard_t, pg_info_t>& p){ dout(20) << "osd." << p.first << " " << p.second << dendl;});
+    for_each( peer_missing.begin(), peer_missing.end(),
+              [this](const std::pair<pg_shard_t, pg_missing_t>& p){ dout(20) << "osd." << p.first << " " << p.second << dendl;});
+  }
 
   last_update_ondisk = eversion_t();
 
@@ -1011,10 +1020,15 @@ map<pg_shard_t, pg_info_t>::const_iterator PG::find_best_info(
     if (max_last_epoch_started_found <= i->second.last_epoch_started) {
       if (min_last_update_acceptable > i->second.last_update)
 	min_last_update_acceptable = i->second.last_update;
+        dout(10) << "min_last_update_acceptable =" << min_last_update_acceptable << dendl;
     }
   }
-  if (min_last_update_acceptable == eversion_t::max())
+  dout(10) << "max_last_epoch_started_found =" << max_last_epoch_started_found << dendl;
+  if (min_last_update_acceptable == eversion_t::max()) {
+    dout(10) << "min_last_update_acceptable =" << min_last_update_acceptable
+      << " eversion_t::max()" << eversion_t::max() << dendl;
     return infos.end();
+  }
 
   map<pg_shard_t, pg_info_t>::const_iterator best = infos.end();
   // find osd with newest last_update (oldest for ec_pool).
@@ -5031,9 +5045,15 @@ void PG::start_peering_interval(
   if (was_old_primary || is_primary()) {
     osd->remove_want_pg_temp(info.pgid.pgid);
   }
-  clear_primary_state();
 
-    
+  // don't clear the state if we are primary and were primary during the last
+  // interval so we can reuse it
+  if (!(was_old_primary && is_primary())) {
+    clear_primary_state(false);
+  } else {
+    clear_primary_state(true);
+  }
+
   // pg->on_*
   on_change(t);
 
@@ -5921,7 +5941,6 @@ void PG::RecoveryState::Primary::exit()
   pg->want_acting.clear();
   utime_t dur = ceph_clock_now(pg->cct) - enter_time;
   pg->osd->recoverystate_perf->tinc(rs_primary_latency, dur);
-  pg->clear_primary_state();
   pg->state_clear(PG_STATE_CREATING);
 }
 

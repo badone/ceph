@@ -10198,7 +10198,7 @@ void ReplicatedPG::on_shutdown()
   osd->remote_reserver.cancel_reservation(info.pgid);
   osd->local_reserver.cancel_reservation(info.pgid);
 
-  clear_primary_state();
+  clear_primary_state(true);
   cancel_recovery();
 }
 
