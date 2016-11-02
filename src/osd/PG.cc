@@ -5914,14 +5914,8 @@ boost::statechart::result PG::RecoveryState::Primary::react(const MNotifyRec& no
 {
   dout(7) << "handle_pg_notify from osd." << notevt.from << dendl;
   PG *pg = context< RecoveryMachine >().pg;
-  if (pg->peer_info.count(notevt.from) &&
-      pg->peer_info[notevt.from].last_update == notevt.notify.info.last_update) {
-    dout(10) << *pg << " got dup osd." << notevt.from << " info " << notevt.notify.info
-	     << ", identical to ours" << dendl;
-  } else {
-    pg->proc_replica_info(
-      notevt.from, notevt.notify.info, notevt.notify.epoch_sent);
-  }
+  pg->proc_replica_info(
+    notevt.from, notevt.notify.info, notevt.notify.epoch_sent);
   return discard_event();
 }
 
@@ -7569,17 +7563,9 @@ boost::statechart::result PG::RecoveryState::Incomplete::react(const AdvMap &adv
 boost::statechart::result PG::RecoveryState::Incomplete::react(const MNotifyRec& notevt) {
   dout(7) << "handle_pg_notify from osd." << notevt.from << dendl;
   PG *pg = context< RecoveryMachine >().pg;
-  if (pg->peer_info.count(notevt.from) &&
-      pg->peer_info[notevt.from].last_update == notevt.notify.info.last_update) {
-    dout(10) << *pg << " got dup osd." << notevt.from << " info " << notevt.notify.info
-	     << ", identical to ours" << dendl;
-    return discard_event();
-  } else {
-    pg->proc_replica_info(
-      notevt.from, notevt.notify.info, notevt.notify.epoch_sent);
-    // try again!
-    return transit< GetLog >();
-  }
+  return pg->proc_replica_info(
+    notevt.from, notevt.notify.info, notevt.notify.epoch_sent) ?
+    discard_event() : transit<GetLog>();
 }
 
 void PG::RecoveryState::Incomplete::exit()
