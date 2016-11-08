@@ -352,6 +352,10 @@ bool PG::proc_replica_info(
   map<pg_shard_t, pg_info_t>::iterator p = peer_info.find(from);
   if (p != peer_info.end() && p->second.last_update == oinfo.last_update) {
     dout(10) << " got dup osd." << from << " info " << oinfo << ", identical to ours" << dendl;
+    if (!(p->second == oinfo)) {
+      osd->clog->error() << "Inconsistency found, replica info != local copy, "
+        << "Remote: " << oinfo << " Local: " << p->second << '\n';
+    }
     return false;
   }
 

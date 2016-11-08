@@ -1977,6 +1977,12 @@ struct pg_hit_set_info_t {
 };
 WRITE_CLASS_ENCODER(pg_hit_set_info_t)
 
+inline bool operator==(const pg_hit_set_info_t& lhs,
+                       const pg_hit_set_info_t& rhs) {
+  return lhs.begin == rhs.begin && lhs.end == rhs.end &&
+         lhs.version == rhs.version && lhs.using_gmt == rhs.using_gmt;
+}
+
 /**
  * pg_hit_set_history_t - information about a history of hitsets
  *
@@ -1993,6 +1999,12 @@ struct pg_hit_set_history_t {
   static void generate_test_instances(list<pg_hit_set_history_t*>& o);
 };
 WRITE_CLASS_ENCODER(pg_hit_set_history_t)
+
+inline bool operator==(const pg_hit_set_history_t& lhs,
+                       const pg_hit_set_history_t& rhs) {
+  return lhs.current_last_update == rhs.current_last_update &&
+         lhs.history == rhs.history;
+}
 
 
 // -----------------------------------------
@@ -2093,6 +2105,7 @@ inline ostream& operator<<(ostream& out, const pg_history_t& h) {
 	     << " " << h.same_up_since << "/" << h.same_interval_since << "/" << h.same_primary_since;
 }
 
+bool operator==(const pg_history_t& lhs, const pg_history_t& rhs);
 
 /**
  * pg_info_t - summary of PG statistics.
@@ -2181,6 +2194,8 @@ inline ostream& operator<<(ostream& out, const pg_info_t& pgi)
       << ")";
   return out;
 }
+
+bool operator==(const pg_info_t& lhs, const pg_info_t& rhs);
 
 struct pg_notify_t {
   epoch_t query_epoch;

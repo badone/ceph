@@ -2752,6 +2752,24 @@ void pg_history_t::generate_test_instances(list<pg_history_t*>& o)
   o.back()->last_epoch_marked_full = 18;
 }
 
+bool operator==(const pg_history_t& lhs, const pg_history_t& rhs)
+{
+  return
+    lhs.epoch_created == rhs.epoch_created &&
+    lhs.last_epoch_started == rhs.last_epoch_started &&
+    lhs.last_epoch_clean == rhs.last_epoch_clean &&
+    lhs.last_epoch_split == rhs.last_epoch_split &&
+    lhs.last_epoch_marked_full == rhs.last_epoch_marked_full &&
+    lhs.same_up_since == rhs.same_up_since &&
+    lhs.same_interval_since == rhs.same_interval_since &&
+    lhs.same_primary_since == rhs.same_primary_since &&
+    lhs.last_scrub == rhs.last_scrub &&
+    lhs.last_deep_scrub == rhs.last_deep_scrub &&
+    lhs.last_scrub_stamp == rhs.last_scrub_stamp &&
+    lhs.last_deep_scrub_stamp == rhs.last_deep_scrub_stamp &&
+    lhs.last_clean_scrub_stamp == rhs.last_clean_scrub_stamp;
+}
+
 
 // -- pg_info_t --
 
@@ -2886,6 +2904,22 @@ void pg_info_t::generate_test_instances(list<pg_info_t*>& o)
     pg_hit_set_history_t::generate_test_instances(s);
     o.back()->hit_set = *s.back();
   }
+}
+
+bool operator==(const pg_info_t& lhs, const pg_info_t& rhs) {
+  return
+    lhs.pgid == rhs.pgid &&
+    lhs.last_update == rhs.last_update &&
+    lhs.last_complete == rhs.last_complete &&
+    lhs.last_epoch_started == rhs.last_epoch_started &&
+    lhs.last_user_version == rhs.last_user_version &&
+    lhs.log_tail == rhs.log_tail &&
+    lhs.last_backfill == rhs.last_backfill &&
+    lhs.last_backfill_bitwise == rhs.last_backfill_bitwise &&
+    lhs.purged_snaps == rhs.purged_snaps &&
+    lhs.stats == rhs.stats &&
+    lhs.history == rhs.history &&
+    lhs.hit_set == rhs.hit_set;
 }
 
 // -- pg_notify_t --
