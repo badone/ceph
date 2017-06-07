@@ -504,6 +504,9 @@ if(HAVE_BLKID)
     )
 endif(HAVE_BLKID)
 
+add_executable(test_libregex test.cc)
+target_link_libraries(test_libregex librados ${Boost_REGEX_LIBRARY})
+
 #make check starts here
 
 #following dependencies are run inside make check unit tests
