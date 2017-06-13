@@ -464,8 +464,10 @@ protected:
   mutable std::mutex creating_pgs_lock;
 
   creating_pgs_t update_pending_pgs(const OSDMap::Incremental& inc);
+  /* Unused
   void trim_creating_pgs(creating_pgs_t *creating_pgs,
 			 const ceph::unordered_map<pg_t,pg_stat_t>& pgm);
+  */
   unsigned scan_for_creating_pgs(
     const mempool::osdmap::map<int64_t,pg_pool_t>& pools,
     const mempool::osdmap::set<int64_t>& removed_pools,
@@ -540,6 +542,8 @@ public:
   void get_removed_snaps_range(
     epoch_t start, epoch_t end,
     mempool::osdmap::map<int64_t,OSDMap::snap_interval_set_t> *gap_removed_snaps);
+
+  void process_crush_errors();
 
   int get_version(version_t ver, bufferlist& bl) override;
   int get_version_full(version_t ver, bufferlist& bl) override;

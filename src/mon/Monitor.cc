@@ -2465,6 +2465,7 @@ health_status_t Monitor::get_health_status(
   string summary;
   string *psummary = f ? nullptr : &summary;
   for (auto& svc : paxos_service) {
+    dout(1) << __func__ << ": Service name = " << svc->service_name << dendl;
     r = std::min(r, svc->get_health_checks().dump_summary(
 		   f, psummary, sep2, want_detail));
   }

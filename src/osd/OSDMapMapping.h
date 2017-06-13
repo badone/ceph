@@ -164,11 +164,15 @@ public:
   }
 };
 
+//struct crush_errors_t;
 
 /// a precalculated mapping of every PG for a given OSDMap
 class OSDMapMapping {
 public:
   MEMPOOL_CLASS_HELPERS();
+
+  //std::map<uint64_t, struct crush_errors_t> per_pool_crush_errors;
+
 private:
 
   struct PoolMapping {
@@ -277,7 +281,12 @@ private:
     }
   };
 
+  bool new_errors = false;
+
 public:
+
+  struct crush_errors_t crush_errors = {0};
+
   void get(pg_t pgid,
 	   std::vector<int> *up,
 	   int *up_primary,
@@ -293,7 +302,7 @@ public:
     assert(osd < acting_rmap.size());
     return acting_rmap[osd];
   }
-  /* unsued
+  /* unused
   const std::vector<pg_t>& get_osd_up_pgs(unsigned osd) {
     assert(osd < up_rmap.size());
     return up_rmap[osd];
@@ -318,6 +327,24 @@ public:
 
   uint64_t get_num_pgs() const {
     return num_pgs;
+  }
+
+  bool has_new_crush_errors() const {
+    return new_errors;
+  }
+
+  void clear_new_crush_errors() {
+    new_errors = false;
+    crush_errors.pool = 0;
+    crush_errors.choose_total_tries_exceeded_errors = 0;
+  }
+
+  uint64_t get_total_crush_errors() const {
+    return crush_errors.choose_total_tries_exceeded_errors;
+  }
+
+  uint64_t get_crush_errors_pool() const {
+    return crush_errors.pool;
   }
 };
 

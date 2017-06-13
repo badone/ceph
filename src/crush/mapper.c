@@ -423,6 +423,7 @@ static int is_out(const struct crush_map *map,
 /**
  * crush_choose_firstn - choose numrep distinct items of given type
  * @map: the crush_map
+ * @work: Blah de blah de blah, blah, blah, blah
  * @bucket: the bucket we are choose an item from
  * @x: crush input value
  * @numrep: the number of items to choose
@@ -456,7 +457,8 @@ static int crush_choose_firstn(const struct crush_map *map,
 			       unsigned int stable,
 			       int *out2,
 			       int parent_r,
-                               const struct crush_choose_arg *choose_args)
+                               const struct crush_choose_arg *choose_args,
+                               const bool testing)
 {
 	int rep;
 	unsigned int ftotal, flocal;
@@ -568,7 +570,8 @@ parent_r %d stable %d\n",
 							    stable,
 							    NULL,
 							    sub_r,
-                                                            choose_args) <= outpos)
+                                                            choose_args,
+                                                            testing) <= outpos)
 							/* didn't get leaf */
 							reject = 1;
 					} else {
@@ -600,9 +603,13 @@ reject:
 					else if (ftotal < tries)
 						/* then retry descent */
 						retry_descent = 1;
-					else
+					else {
 						/* else give up */
 						skip_rep = 1;
+                                                if (!testing) {
+                                                  work->choose_total_tries_exceeded++;
+                                                }
+                    }
 					dprintk("  reject %d  collide %d  "
 						"ftotal %u  flocal %u\n",
 						reject, collide, ftotal,
@@ -883,7 +890,8 @@ void crush_init_workspace(const struct crush_map *m, void *v) {
 int crush_do_rule(const struct crush_map *map,
 		  int ruleno, int x, int *result, int result_max,
 		  const __u32 *weight, int weight_max,
-		  void *cwin, const struct crush_choose_arg *choose_args)
+		  void *cwin, const struct crush_choose_arg *choose_args,
+                  const bool testing)
 {
 	int result_len;
 	struct crush_work *cw = cwin;
@@ -1034,7 +1042,8 @@ int crush_do_rule(const struct crush_map *map,
 						stable,
 						c+osize,
 						0,
-						choose_args);
+						choose_args,
+						testing);
 				} else {
 					out_size = ((numrep < (result_max-osize)) ?
 						    numrep : (result_max-osize));

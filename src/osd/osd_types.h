@@ -1294,6 +1294,7 @@ struct pg_pool_t {
   __u8 size, min_size;      ///< number of osds in each pg
   __u8 crush_rule;          ///< crush placement rule
   __u8 object_hash;         ///< hash mapping object name to ps
+  uint64_t choose_total_tries_exceeded_errors = 0;
 private:
   __u32 pg_num, pgp_num;    ///< number of pgs
 
@@ -1665,6 +1666,7 @@ struct object_stat_sum_t {
   int64_t num_objects_missing;
   int64_t num_legacy_snapsets; ///< upper bound on pre-luminous-style SnapSets
   int64_t num_large_omap_objects = 0;
+  int64_t num_choose_total_tries_exceeded_errors = 0;
 
   object_stat_sum_t()
     : num_bytes(0),
@@ -1734,6 +1736,7 @@ struct object_stat_sum_t {
     FLOOR(num_evict_mode_full);
     FLOOR(num_objects_pinned);
     FLOOR(num_legacy_snapsets);
+    FLOOR(num_choose_total_tries_exceeded_errors);
 #undef FLOOR
   }
 
@@ -1789,6 +1792,7 @@ struct object_stat_sum_t {
     SPLIT(num_evict_mode_full);
     SPLIT(num_objects_pinned);
     SPLIT_PRESERVE_NONZERO(num_legacy_snapsets);
+    SPLIT(num_choose_total_tries_exceeded_errors);
 #undef SPLIT
 #undef SPLIT_PRESERVE_NONZERO
   }
@@ -1847,7 +1851,8 @@ struct object_stat_sum_t {
         sizeof(num_evict_mode_full) +
         sizeof(num_objects_pinned) +
         sizeof(num_objects_missing) +
-        sizeof(num_legacy_snapsets)
+        sizeof(num_legacy_snapsets) +
+        sizeof(num_choose_total_tries_exceeded_errors)
       ,
       "object_stat_sum_t have padding");
   }

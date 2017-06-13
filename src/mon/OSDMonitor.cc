@@ -166,6 +166,12 @@ struct C_UpdateCreatingPGs : public Context {
 	       << (end - start) << " seconds" << dendl;
       osdmon->update_creating_pgs();
       osdmon->check_pg_creates_subs();
+      if (osdmon->mapping.has_new_crush_errors()) {
+        osdmon->mon->clog->warn() << osdmon->mapping.get_total_crush_errors()
+                                  << " crush errors seen while mapping pgs to"
+                                  << " osds";
+        osdmon->process_crush_errors();
+      }
     }
   }
 };
@@ -1330,6 +1336,7 @@ void OSDMonitor::encode_pending(MonitorDBStore::TransactionRef t)
   encode_health(next, t);
 }
 
+/* Unused
 void OSDMonitor::trim_creating_pgs(creating_pgs_t* creating_pgs,
 				   const ceph::unordered_map<pg_t,pg_stat_t>& pg_stat)
 {
@@ -1346,6 +1353,7 @@ void OSDMonitor::trim_creating_pgs(creating_pgs_t* creating_pgs,
     }
   }
 }
+*/
 
 int OSDMonitor::load_metadata(int osd, map<string, string>& m, ostream *err)
 {
@@ -3107,6 +3115,17 @@ void OSDMonitor::get_removed_snaps_range(
     }
     dout(10) << __func__ << " " << p.first << " " << t << dendl;
   }
+}
+
+void OSDMonitor::process_crush_errors()
+{
+  derr << __func__ << " " << mapping.get_crush_errors_pool() << " "
+       << mapping.get_total_crush_errors() << dendl;
+  const pool_stat_t *pstat =
+      mon->mgrstatmon()->get_pool_stat(mapping.get_crush_errors_pool());
+  if (!pstat)
+    return;
+  mapping.clear_new_crush_errors();
 }
 
 int OSDMonitor::get_version(version_t ver, bufferlist& bl)

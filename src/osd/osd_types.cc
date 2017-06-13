@@ -1960,6 +1960,8 @@ void object_stat_sum_t::dump(Formatter *f) const
   f->dump_int("num_objects_pinned", num_objects_pinned);
   f->dump_int("num_legacy_snapsets", num_legacy_snapsets);
   f->dump_int("num_large_omap_objects", num_large_omap_objects);
+  f->dump_int("num_choose_total_tries_exceeded_errors",
+              num_choose_total_tries_exceeded_errors);
 }
 
 void object_stat_sum_t::encode(bufferlist& bl) const
@@ -2004,6 +2006,7 @@ void object_stat_sum_t::encode(bufferlist& bl) const
   ::encode(num_objects_missing, bl);
   ::encode(num_legacy_snapsets, bl);
   ::encode(num_large_omap_objects, bl);
+  ::encode(num_choose_total_tries_exceeded_errors, bl);
 #endif
   ENCODE_FINISH(bl);
 }
@@ -2060,6 +2063,7 @@ void object_stat_sum_t::decode(bufferlist::iterator& bl)
     }
     if (struct_v >= 17) {
       ::decode(num_large_omap_objects, bl);
+      ::decode(num_choose_total_tries_exceeded_errors, bl);
     }
   }
   DECODE_FINISH(bl);
@@ -2142,6 +2146,8 @@ void object_stat_sum_t::add(const object_stat_sum_t& o)
   num_objects_pinned += o.num_objects_pinned;
   num_legacy_snapsets += o.num_legacy_snapsets;
   num_large_omap_objects += o.num_large_omap_objects;
+  num_choose_total_tries_exceeded_errors +=
+      o.num_choose_total_tries_exceeded_errors;
 }
 
 void object_stat_sum_t::sub(const object_stat_sum_t& o)
@@ -2182,6 +2188,8 @@ void object_stat_sum_t::sub(const object_stat_sum_t& o)
   num_objects_pinned -= o.num_objects_pinned;
   num_legacy_snapsets -= o.num_legacy_snapsets;
   num_large_omap_objects -= o.num_large_omap_objects;
+  num_choose_total_tries_exceeded_errors -=
+      o.num_choose_total_tries_exceeded_errors;
 }
 
 bool operator==(const object_stat_sum_t& l, const object_stat_sum_t& r)
@@ -2222,7 +2230,9 @@ bool operator==(const object_stat_sum_t& l, const object_stat_sum_t& r)
     l.num_evict_mode_full == r.num_evict_mode_full &&
     l.num_objects_pinned == r.num_objects_pinned &&
     l.num_legacy_snapsets == r.num_legacy_snapsets &&
-    l.num_large_omap_objects == r.num_large_omap_objects;
+    l.num_large_omap_objects == r.num_large_omap_objects &&
+    l.num_choose_total_tries_exceeded_errors ==
+        r.num_choose_total_tries_exceeded_errors;
 }
 
 // -- object_stat_collection_t --

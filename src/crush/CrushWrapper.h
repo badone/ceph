@@ -26,6 +26,7 @@ extern "C" {
 #include "include/mempool.h"
 
 #include "common/Mutex.h"
+#include "osd/osd_types.h"
 
 #define BUG_ON(x) assert(!(x))
 
@@ -1473,21 +1474,32 @@ public:
   }
 
   template<typename WeightVector>
-  void do_rule(int rule, int x, vector<int>& out, int maxout,
-	       const WeightVector& weight,
-	       uint64_t choose_args_index) const {
+  int do_rule(int rule, int x, vector<int>& out, int maxout,
+	       const WeightVector& weight, uint64_t choose_args_index,
+              struct crush_errors_t* crush_errors = nullptr,
+              const bool testing = false) const {
     int rawout[maxout];
-    char work[crush_work_size(crush, maxout)];
+    char work[crush_work_size(crush, maxout)] = {0};
     crush_init_workspace(crush, work);
     crush_choose_arg_map arg_map = choose_args_get_with_fallback(
       choose_args_index);
     int numrep = crush_do_rule(crush, rule, x, rawout, maxout, &weight[0],
-			       weight.size(), work, arg_map.args);
+			       weight.size(), work, arg_map.args, testing);
+    if (crush_errors) {
+      uint64_t errors =
+        reinterpret_cast<struct crush_work *>(work)->choose_total_tries_exceeded;
+    cerr << __func__ << " errors = " << errors << '\n';
+    if (errors > 100) assert(0);
+    if (errors)
+      crush_errors->choose_total_tries_exceeded_errors += errors;
+    }
     if (numrep < 0)
       numrep = 0;
     out.resize(numrep);
     for (int i=0; i<numrep; i++)
       out[i] = rawout[i];
+    //return errors ? -ERANGE : 0;
+    return 0;
   }
 
   int _choose_type_stack(

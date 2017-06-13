@@ -615,7 +615,7 @@ int CrushTester::test()
             if (pool_id != -1) {
               real_x = crush_hash32_2(CRUSH_HASH_RJENKINS1, x, (uint32_t)pool_id);
             }
-            crush.do_rule(r, real_x, out, nr, weight, 0);
+            crush.do_rule(r, real_x, out, nr, weight, 0, nullptr, true);
           } else {
             if (output_mappings)
 	      err << "RNG"; // prepend RNG to placement output to denote simulation

@@ -7,6 +7,7 @@
 #define dout_subsys ceph_subsys_mon
 
 #include "common/debug.h"
+#include "crush/CrushWrapper.h"
 
 MEMPOOL_DEFINE_OBJECT_FACTORY(OSDMapMapping, osdmapmapping,
 			      osdmap_mapping);
@@ -116,9 +117,22 @@ void OSDMapMapping::_update_range(
     int up_primary, acting_primary;
     osdmap.pg_to_up_acting_osds(
       pg_t(ps, pool),
-      &up, &up_primary, &acting, &acting_primary);
+      &up, &up_primary, &acting, &acting_primary, &crush_errors);
     i->second.set(ps, std::move(up), up_primary,
 		  std::move(acting), acting_primary);
+  }
+
+  if (crush_errors.has_errors()) {
+    //auto pool_errors = per_pool_crush_errors.find(pool);
+    //if (pool_errors != per_pool_crush_errors.end())
+    //  pool_errors->second.choose_total_tries_exceeded_errors +=
+    //      crush_errors.choose_total_tries_exceeded_errors;
+    //else
+    //  per_pool_crush_errors.insert(std::make_pair(pool, crush_errors));
+
+    //map_total_crush_errors += crush_errors.choose_total_tries_exceeded_errors;
+    crush_errors.pool = pool;
+    new_errors = true;
   }
 }
 

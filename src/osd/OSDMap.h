@@ -1058,10 +1058,11 @@ public:
 
 private:
   /// pg -> (raw osd list)
-  void _pg_to_raw_osds(
+  int _pg_to_raw_osds(
     const pg_pool_t& pool, pg_t pg,
     vector<int> *osds,
-    ps_t *ppps) const;
+    ps_t *ppps,
+    struct crush_errors_t* crush_errors) const;
   int _pick_primary(const vector<int>& osds) const;
   void _remove_nonexistent_osds(const pg_pool_t& pool, vector<int>& osds) const;
 
@@ -1088,9 +1089,11 @@ private:
   /**
    *  map to up and acting. Fills in whatever fields are non-NULL.
    */
-  void _pg_to_up_acting_osds(const pg_t& pg, vector<int> *up, int *up_primary,
+  int _pg_to_up_acting_osds(const pg_t& pg, vector<int> *up, int *up_primary,
                              vector<int> *acting, int *acting_primary,
-			     bool raw_pg_to_pg = true) const;
+			     bool raw_pg_to_pg = true,
+                             struct crush_errors_t* crush_errors = nullptr
+                           ) const;
 
 public:
   /***
@@ -1121,8 +1124,10 @@ public:
    * Each of these pointers must be non-NULL.
    */
   void pg_to_up_acting_osds(pg_t pg, vector<int> *up, int *up_primary,
-                            vector<int> *acting, int *acting_primary) const {
-    _pg_to_up_acting_osds(pg, up, up_primary, acting, acting_primary);
+                           vector<int> *acting, int *acting_primary,
+                           struct crush_errors_t* crush_errors = nullptr) const {
+    _pg_to_up_acting_osds(pg, up, up_primary, acting, acting_primary, true,
+                                 crush_errors);
   }
   void pg_to_up_acting_osds(pg_t pg, vector<int>& up, vector<int>& acting) const {
     int up_primary, acting_primary;

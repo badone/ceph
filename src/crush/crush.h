@@ -7,6 +7,8 @@
 # include "crush_compat.h"
 #endif
 
+#include <stdbool.h>
+
 /*
  * CRUSH is a pseudo-random data distribution algorithm that
  * efficiently distributes input values (typically, data objects)
@@ -524,6 +526,14 @@ static inline const char *crush_alg_name(int alg)
 	}
 }
 
+// Crush errors
+struct crush_errors_t {
+  uint64_t pool;
+  uint64_t choose_total_tries_exceeded_errors;
+  bool testing;
+  bool has_errors;
+};
+
 /* ---------------------------------------------------------------------
 			       Private
    --------------------------------------------------------------------- */
@@ -543,6 +553,7 @@ struct crush_work_bucket {
 };
 
 struct crush_work {
+    __u32 choose_total_tries_exceeded;
 	struct crush_work_bucket **work; /* Per-bucket working store */
 };
 

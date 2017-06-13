@@ -1933,10 +1933,10 @@ void OSDMap::_remove_nonexistent_osds(const pg_pool_t& pool,
   }
 }
 
-void OSDMap::_pg_to_raw_osds(
+int OSDMap::_pg_to_raw_osds(
   const pg_pool_t& pool, pg_t pg,
   vector<int> *osds,
-  ps_t *ppps) const
+  ps_t *ppps, struct crush_errors_t* crush_errors = nullptr) const
 {
   // map to osds[]
   ps_t pps = pool.raw_pg_to_pps(pg);  // placement ps
@@ -1944,13 +1944,16 @@ void OSDMap::_pg_to_raw_osds(
 
   // what crush rule?
   int ruleno = crush->find_rule(pool.get_crush_rule(), pool.get_type(), size);
+  int ret = 0;
   if (ruleno >= 0)
-    crush->do_rule(ruleno, pps, *osds, size, osd_weight, pg.pool());
+    ret = crush->do_rule(ruleno, pps, *osds, size, osd_weight, pg.pool(),
+                         crush_errors);
 
   _remove_nonexistent_osds(pool, *osds);
 
   if (ppps)
     *ppps = pps;
+  return ret;
 }
 
 int OSDMap::_pick_primary(const vector<int>& osds) const
@@ -2151,10 +2154,10 @@ void OSDMap::pg_to_raw_up(pg_t pg, vector<int> *up, int *primary) const
   _apply_primary_affinity(pps, *pool, up, primary);
 }
 
-void OSDMap::_pg_to_up_acting_osds(
+int OSDMap::_pg_to_up_acting_osds(
   const pg_t& pg, vector<int> *up, int *up_primary,
   vector<int> *acting, int *acting_primary,
-  bool raw_pg_to_pg) const
+  bool raw_pg_to_pg, struct crush_errors_t* crush_errors) const
 {
   const pg_pool_t *pool = get_pg_pool(pg.pool());
   if (!pool ||
@@ -2167,7 +2170,7 @@ void OSDMap::_pg_to_up_acting_osds(
       acting->clear();
     if (acting_primary)
       *acting_primary = -1;
-    return;
+    return 0;
   }
   vector<int> raw;
   vector<int> _up;
@@ -2175,9 +2178,10 @@ void OSDMap::_pg_to_up_acting_osds(
   int _up_primary;
   int _acting_primary;
   ps_t pps;
+  int ret = 0;
   _get_temp_osds(*pool, pg, &_acting, &_acting_primary);
   if (_acting.empty() || up || up_primary) {
-    _pg_to_raw_osds(*pool, pg, &raw, &pps);
+    ret = _pg_to_raw_osds(*pool, pg, &raw, &pps, crush_errors);
     _apply_upmap(*pool, pg, &raw);
     _raw_to_up_osds(*pool, raw, &_up);
     _up_primary = _pick_primary(_up);
@@ -2199,6 +2203,7 @@ void OSDMap::_pg_to_up_acting_osds(
     acting->swap(_acting);
   if (acting_primary)
     *acting_primary = _acting_primary;
+  return ret;
 }
 
 int OSDMap::calc_pg_rank(int osd, const vector<int>& acting, int nrep)
