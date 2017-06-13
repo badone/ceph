@@ -1058,7 +1058,7 @@ public:
 
 private:
   /// pg -> (raw osd list)
-  void _pg_to_raw_osds(
+  int _pg_to_raw_osds(
     const pg_pool_t& pool, pg_t pg,
     vector<int> *osds,
     ps_t *ppps) const;

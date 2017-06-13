@@ -1303,7 +1303,7 @@ public:
   }
 
   template<typename WeightVector>
-  void do_rule(int rule, int x, vector<int>& out, int maxout,
+  int do_rule(int rule, int x, vector<int>& out, int maxout,
 	       const WeightVector& weight,
 	       uint64_t choose_args_index) const {
     int rawout[maxout];
@@ -1312,11 +1312,13 @@ public:
     crush_choose_arg_map arg_map = choose_args_get(choose_args_index);
     int numrep = crush_do_rule(crush, rule, x, rawout, maxout, &weight[0],
 			       weight.size(), work, arg_map.args);
+    int ret = reinterpret_cast<struct crush_work*>(work)->choose_total_tries_exceeded;
     if (numrep < 0)
       numrep = 0;
     out.resize(numrep);
     for (int i=0; i<numrep; i++)
       out[i] = rawout[i];
+    return ret;
   }
 
   int _choose_type_stack(

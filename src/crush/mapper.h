@@ -85,7 +85,7 @@ extern int crush_do_rule(const struct crush_map *map,
 
 static inline size_t crush_work_size(const struct crush_map *map,
 				     int result_max) {
-	return map->working_size + result_max * 3 * sizeof(__u32);
+	return map->working_size + result_max * 3 * sizeof(__u32) + sizeof(__u32);
 }
 
 extern void crush_init_workspace(const struct crush_map *m, void *v);

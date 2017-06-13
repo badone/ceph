@@ -1877,7 +1877,7 @@ void OSDMap::_remove_nonexistent_osds(const pg_pool_t& pool,
   }
 }
 
-void OSDMap::_pg_to_raw_osds(
+int OSDMap::_pg_to_raw_osds(
   const pg_pool_t& pool, pg_t pg,
   vector<int> *osds,
   ps_t *ppps) const
@@ -1888,13 +1888,15 @@ void OSDMap::_pg_to_raw_osds(
 
   // what crush rule?
   int ruleno = crush->find_rule(pool.get_crush_rule(), pool.get_type(), size);
+  int ret = 0;
   if (ruleno >= 0)
-    crush->do_rule(ruleno, pps, *osds, size, osd_weight, pg.pool());
+    ret = crush->do_rule(ruleno, pps, *osds, size, osd_weight, pg.pool());
 
   _remove_nonexistent_osds(pool, *osds);
 
   if (ppps)
     *ppps = pps;
+  return ret;
 }
 
 int OSDMap::_pick_primary(const vector<int>& osds) const

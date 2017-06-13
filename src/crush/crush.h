@@ -543,6 +543,7 @@ struct crush_work_bucket {
 };
 
 struct crush_work {
+    __u32 choose_total_tries_exceeded;
 	struct crush_work_bucket **work; /* Per-bucket working store */
 };
 

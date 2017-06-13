@@ -601,9 +601,11 @@ reject:
 					else if (ftotal < tries)
 						/* then retry descent */
 						retry_descent = 1;
-					else
+					else {
 						/* else give up */
 						skip_rep = 1;
+						work->choose_total_tries_exceeded++;
+                    }
 					dprintk("  reject %d  collide %d  "
 						"ftotal %u  flocal %u\n",
 						reject, collide, ftotal,
