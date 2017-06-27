@@ -4665,16 +4665,24 @@ void PG::scrub_compare_maps()
     }
   }
 
+  stringstream ss;
+  get_pgbackend()->be_large_omap_check(maps, master_set,
+                                       scrubber.large_omap_objects, ss);
+  if (!ss.str().empty()) {
+    osd->clog->warn(ss);
+  }
+
   if (acting.size() > 1) {
     dout(10) << __func__ << "  comparing replica scrub maps" << dendl;
-
-    stringstream ss;
 
     // Map from object with errors to good peer
     map<hobject_t, list<pg_shard_t>> authoritative;
 
     dout(2) << __func__ << "   osd." << acting[0] << " has "
 	    << scrubber.primary_scrubmap.objects.size() << " items" << dendl;
+
+    ss.str("");
+    ss.clear();
 
     get_pgbackend()->be_compare_scrubmaps(
       maps,
@@ -4872,6 +4880,7 @@ void PG::scrub_finish()
       info.history.last_clean_scrub_stamp = now;
     info.stats.stats.sum.num_shallow_scrub_errors = scrubber.shallow_errors;
     info.stats.stats.sum.num_deep_scrub_errors = scrubber.deep_errors;
+    info.stats.stats.sum.num_large_omap_objects = scrubber.large_omap_objects;
   } else {
     info.stats.stats.sum.num_shallow_scrub_errors = scrubber.shallow_errors;
     // XXX: last_clean_scrub_stamp doesn't mean the pg is not inconsistent

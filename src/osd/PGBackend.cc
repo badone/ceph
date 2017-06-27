@@ -1099,3 +1099,24 @@ out:
     }
   }
 }
+
+void PGBackend::be_large_omap_check(const map<pg_shard_t,ScrubMap*> &maps,
+  const set<hobject_t> &master_set,
+  int& large_omap_objects,
+  ostream &warnstream)
+{
+  // Iterate through objects and check large omap object flag
+  for (auto k = master_set.begin(); k != master_set.end(); ++k) {
+    for (map<pg_shard_t, ScrubMap *>::const_iterator  j = maps.begin();
+         j != maps.end(); ++j) {
+      ScrubMap::object& obj = j->second->objects[*k];
+      if(obj.large_omap_object_found) {
+        large_omap_objects++;
+        warnstream << "Large omap object found. Object: " << *k << " Key count: "
+                   << obj.large_omap_object_key_count << " Size (bytes): "
+                   << obj.large_omap_object_value_size << '\n';
+        continue;
+      }
+    }
+  }
+}
