@@ -2817,6 +2817,13 @@ void PGMap::get_health_checks(
     checks->add("OSD_SCRUB_ERRORS", HEALTH_ERR, ss.str());
   }
 
+  // LARGE_OMAP_OBJECTS
+  if (pg_sum.stats.sum.num_large_omap_objects) {
+    ostringstream ss;
+    ss << pg_sum.stats.sum.num_large_omap_objects << " large omap objects";
+    checks->add("LARGE_OMAP_OBJECTS", HEALTH_WARN, ss.str());
+  }
+
   // CACHE_POOL_NEAR_FULL
   {
     list<string> detail;
@@ -3533,6 +3540,15 @@ void PGMap::get_health(
     if (detail) {
       detail->push_back(make_pair(HEALTH_ERR, ss.str()));
     }
+  }
+
+  // large omap objects
+  if (pg_sum.stats.sum.num_large_omap_objects) {
+    ostringstream ss;
+    ss << pg_sum.stats.sum.num_large_omap_objects << " large omap objects";
+    summary.push_back(make_pair(HEALTH_WARN, ss.str()));
+    if (detail)
+      detail->push_back(make_pair(HEALTH_WARN, ss.str()));
   }
 
   // pg skew

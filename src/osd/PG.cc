@@ -4764,6 +4764,23 @@ void PG::scrub_compare_maps()
       maps[*i] = &scrubber.received_maps[*i];
     }
 
+    set<hobject_t> seen;
+    for (auto map : maps) {
+      for (auto object : map.second->objects) {
+        if (object.second.large_omap_object_found
+            && seen.find(object.second.large_omap_object) == seen.end()) {
+          scrubber.large_omap_objects++;
+          osd->clog->warn() << "Large omap object found. Object: "
+                            << object.second.large_omap_object
+                            << " Key count: "
+                            << object.second.large_omap_object_key_count
+                            << " Size (bytes): "
+                            << object.second.large_omap_object_value_size;
+          seen.insert(object.second.large_omap_object);
+        }
+      }
+    }
+
     get_pgbackend()->be_compare_scrubmaps(
       maps,
       state_test(PG_STATE_REPAIR),
@@ -4959,6 +4976,7 @@ void PG::scrub_finish()
       info.history.last_clean_scrub_stamp = now;
     info.stats.stats.sum.num_shallow_scrub_errors = scrubber.shallow_errors;
     info.stats.stats.sum.num_deep_scrub_errors = scrubber.deep_errors;
+    info.stats.stats.sum.num_large_omap_objects = scrubber.large_omap_objects;
   } else {
     info.stats.stats.sum.num_shallow_scrub_errors = scrubber.shallow_errors;
     // XXX: last_clean_scrub_stamp doesn't mean the pg is not inconsistent

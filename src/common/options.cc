@@ -2211,6 +2211,18 @@ std::vector<Option> get_global_options() {
     .set_default(2*60*60)
     .set_description(""),
 
+    Option("osd_deep_scrub_large_omap_object_key_threshold", Option::TYPE_UINT, Option::LEVEL_ADVANCED)
+    .set_default(2000000)
+    .set_description("threshold for number of keys to determine a large omap object 2000000 default")
+    .add_service("osd")
+    .add_see_also("osd_deep_scrub_large_omap_object_value_sum_threshold"),
+
+    Option("osd_deep_scrub_large_omap_object_value_sum_threshold", Option::TYPE_UINT, Option::LEVEL_ADVANCED)
+    .set_default(1*1024*1024*1024)
+    .set_description("threshold for summed size (bytes) of all key values to determine a large omap object 1GB default")
+    .add_service("osd")
+    .add_see_also("osd_deep_scrub_large_omap_object_key_threshold"),
+
     Option("osd_class_dir", Option::TYPE_STR, Option::LEVEL_ADVANCED)
     .set_default(CEPH_LIBDIR "/rados-classes")
     .set_description(""),
