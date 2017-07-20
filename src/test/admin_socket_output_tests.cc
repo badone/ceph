@@ -31,20 +31,29 @@ bool test_dump_pgstate_history(std::string &output) {
   JSONParser parser;
   bool ret = parser.parse(output.c_str(), output.size());
   if (!ret) {
-    std::cerr << "test_dump_pgstate_history: parse error" << std::endl;
+    std::cerr << "test_dump_pgstate_history: parse error, failing" << std::endl;
+    std::cerr << "Dumping full output: " << std::endl;
+    std::cerr << output << std::endl;
     return false;
   }
 
   JSONObjIter iter = parser.find_first();
+  if (iter.end()) {
+    std::cerr << "test_dump_pgstate_history: output empty, failing" << std::endl;
+    std::cerr << "Dumping full output: " << std::endl;
+    std::cerr << output << std::endl;
+    return false;
+  }
+
   for (; !iter.end(); ++iter) {
     if ((*iter)->get_name() == "pg") {
-      ret = !(*iter)->get_data().empty();
-      if (ret == false) {
+      ret = (*iter)->get_data().empty();
+      if (ret == true) {
         std::cerr << "test_dump_pgstate_history: pg value empty, failing"
                   << std::endl;
         std::cerr << "Dumping full output: " << std::endl;
         std::cerr << output << std::endl;
-        break;
+        return false;
       }
     } else if ((*iter)->get_name() == "history") {
       ret = std::string::npos != (*iter)->get_data().find("epoch") &&
@@ -58,6 +67,8 @@ bool test_dump_pgstate_history(std::string &output) {
                   << std::endl;
         std::cerr << "Problem output was:" << std::endl;
         std::cerr << (*iter)->get_data() << std::endl;
+        std::cerr << "Dumping full output: " << std::endl;
+        std::cerr << output << std::endl;
         break;
       }
     }
