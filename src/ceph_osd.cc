@@ -265,6 +265,9 @@ int main(int argc, const char **argv)
     return -ENODEV;
   }
 
+  // Make sure output is flushed at any exit call below
+  g_ceph_context->_log->set_flush_on_exit();
+
 #ifdef BUILDING_FOR_EMBEDDED
   cephd_preload_embedded_plugins();
 #endif
