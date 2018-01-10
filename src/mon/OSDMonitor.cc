@@ -1330,6 +1330,8 @@ void OSDMonitor::encode_pending(MonitorDBStore::TransactionRef t)
   encode_health(next, t);
 }
 
+
+/* Unused
 void OSDMonitor::trim_creating_pgs(creating_pgs_t* creating_pgs,
 				   const ceph::unordered_map<pg_t,pg_stat_t>& pg_stat)
 {
@@ -1346,6 +1348,7 @@ void OSDMonitor::trim_creating_pgs(creating_pgs_t* creating_pgs,
     }
   }
 }
+*/
 
 int OSDMonitor::load_metadata(int osd, map<string, string>& m, ostream *err)
 {
