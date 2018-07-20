@@ -66,6 +66,7 @@ class Context {
  public:
   Context() {}
   virtual ~Context() {}       // we want a virtual destructor!!!
+  virtual void dummy() {}
   virtual void complete(int r) {
     finish(r);
     delete this;

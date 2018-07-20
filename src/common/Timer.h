@@ -89,6 +89,8 @@ public:
    */
   void cancel_all_events();
 
+  void validate_schedule() const;
+
 };
 
 #endif
