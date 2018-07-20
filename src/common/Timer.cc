@@ -191,3 +191,11 @@ void SafeTimer::dump(const char *caller) const
        ++s)
     ldout(cct,10) << " " << s->first << "->" << s->second << dendl;
 }
+
+void SafeTimer::validate_schedule() const
+{
+  for (auto i: schedule) {
+    Context* callback = i.second;
+    callback->dummy();
+  }
+}

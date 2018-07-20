@@ -2350,8 +2350,13 @@ class OSD::C_Tick : public Context {
 
 class OSD::C_Tick_WithoutOSDLock : public Context {
   OSD *osd;
+  int x;
   public:
   explicit C_Tick_WithoutOSDLock(OSD *o) : osd(o) {}
+  void dummy() override {
+    // Busy work
+    x = osd->get_nodeid();
+  }
   void finish(int r) override {
     osd->tick_without_osd_lock();
   }
@@ -2440,6 +2445,7 @@ int OSD::init()
 
   tick_timer.init();
   tick_timer_without_osd_lock.init();
+  tick_timer_without_osd_lock.validate_schedule();
   service.recovery_request_timer.init();
   service.recovery_sleep_timer.init();
 
@@ -2683,7 +2689,9 @@ int OSD::init()
   tick_timer.add_event_after(cct->_conf->osd_heartbeat_interval, new C_Tick(this));
   {
     Mutex::Locker l(tick_timer_lock);
+    tick_timer_without_osd_lock.validate_schedule();
     tick_timer_without_osd_lock.add_event_after(cct->_conf->osd_heartbeat_interval, new C_Tick_WithoutOSDLock(this));
+    tick_timer_without_osd_lock.validate_schedule();
   }
 
   osd_lock.Unlock();
@@ -3439,7 +3447,9 @@ int OSD::shutdown()
 
   {
     Mutex::Locker l(tick_timer_lock);
+    tick_timer_without_osd_lock.validate_schedule();
     tick_timer_without_osd_lock.shutdown();
+    tick_timer_without_osd_lock.validate_schedule();
   }
 
   // note unmount epoch
@@ -5423,7 +5433,9 @@ void OSD::tick_without_osd_lock()
 
   mgrc.update_osd_health(get_health_metrics());
   service.kick_recovery_queue();
+  tick_timer_without_osd_lock.validate_schedule();
   tick_timer_without_osd_lock.add_event_after(OSD_TICK_INTERVAL, new C_Tick_WithoutOSDLock(this));
+  tick_timer_without_osd_lock.validate_schedule();
 }
 
 void OSD::check_ops_in_flight()
