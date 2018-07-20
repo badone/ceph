@@ -97,6 +97,7 @@ public:
 
   void decode_payload() override
   {
+    ceph_assert(osd_health_metrics.size() < 1000);
     bufferlist::iterator p = payload.begin();
     ::decode(daemon_name, p);
     ::decode(declare_types, p);
@@ -113,6 +114,7 @@ public:
   }
 
   void encode_payload(uint64_t features) override {
+    ceph_assert(osd_health_metrics.size() < 1000);
     ::encode(daemon_name, payload);
     ::encode(declare_types, payload);
     ::encode(packed, payload);
@@ -138,6 +140,7 @@ public:
       out << " status=" << daemon_status->size();
     }
     if (!osd_health_metrics.empty()) {
+      ceph_assert(osd_health_metrics.size() < 1000);
       out << " osd_metrics=" << osd_health_metrics.size();
     }
     out << ")";

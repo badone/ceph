@@ -313,6 +313,7 @@ void MgrClient::send_report()
     daemon_dirty_status = false;
   }
 
+  ceph_assert(osd_health_metrics.size() < 1000);
   report->osd_health_metrics = std::move(osd_health_metrics);
   session->con->send_message(report);
 
@@ -465,5 +466,6 @@ int MgrClient::service_daemon_update_status(
 
 void MgrClient::update_osd_health(std::vector<OSDHealthMetric>&& metrics)
 {
+  ceph_assert(osd_health_metrics.size() < 1000);
   osd_health_metrics = std::move(metrics);
 }
