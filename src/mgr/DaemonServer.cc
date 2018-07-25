@@ -1480,9 +1480,10 @@ void DaemonServer::send_report()
       if (acc == accumulated.end()) {
 	auto collector = OSDHealthMetricCollector::create(metric.get_type());
 	if (!collector) {
-	  derr << __func__ << " " << osd.first << "." << osd.second
+          derr << "Unknown health metric received" << dendl;
+	  audit_clog->error() << __func__ << " " << osd.first << "." << osd.second
 	       << " sent me an unknown health metric: "
-	       << static_cast<uint8_t>(metric.get_type()) << dendl;
+	       << static_cast<uint8_t>(metric.get_type());
 	  continue;
 	}
 	tie(acc, std::ignore) = accumulated.emplace(metric.get_type(),
