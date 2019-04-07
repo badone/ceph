@@ -177,6 +177,8 @@ usage=$usage"\t-g --gssapi enable Kerberos/GSSApi authentication\n"
 usage=$usage"\t-G disable Kerberos/GSSApi authentication\n"
 usage=$usage"\t--hitset <pool> <hit_set_type>: enable hitset tracking\n"
 usage=$usage"\t-e : create an erasure pool\n";
+usage=$usage"\t-r {npgs} : create a replicated pool with npgs pgs (default 12)\n";
+usage=$usage"\t-w {nseconds} : use rados bench to write data for nseconds to pool created with -e or -r\n";
 usage=$usage"\t-o config\t\t add extra config parameters to all sections\n"
 usage=$usage"\t--rgw_port specify ceph rgw http listen port\n"
 usage=$usage"\t--rgw_frontend specify the rgw frontend configuration\n"
@@ -376,6 +378,16 @@ case $1 in
         [ -z "$2" ] && usage_exit
         pci_id="$2"
         spdk_enabled=1
+        shift
+        ;;
+    -r )
+        [ -z "$2" ] && usage_exit
+        pgs="$2"
+        shift
+       ;;
+    -w )
+        [ -z "$2" ] && usage_exit
+        writeduration="$2"
         shift
         ;;
     * )
