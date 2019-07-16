@@ -1,0 +1,75 @@
+roles:
+- - mon.a
+  - mgr.x
+  - osd.0
+  - osd.1
+  - osd.2
+  - osd.3
+  - client.0
+- - mon.b
+  - mon.c
+  - osd.4
+  - osd.5
+  - osd.6
+  - osd.7
+  - client.1
+- - client.2
+openstack:
+  - volumes: # attached to each instance
+      count: 4
+      size: 10 # GB
+overrides:
+  ceph:
+    conf:
+      osd:
+        #osd memory target: 1610612736 # reduced to 1.5_G
+        osd memory target: 1073741824 # reduced to 1_G
+        osd objectstore: bluestore
+        debug bluestore: 20
+tasks:
+- install:
+- ceph:
+    create_rbd_pool: false
+    log-whitelist:
+      - overall HEALTH_
+      - \(OSDMAP_FLAGS\)
+      - \(OSD_
+      - \(PG_
+      - \(POOL_
+      - \(CACHE_POOL_
+      - \(OBJECT_
+      - \(SLOW_OPS\)
+      - \(REQUEST_SLOW\)
+      - \(TOO_FEW_PGS\)
+      - slow requests
+- parallel:
+    - benchload
+    - thrashit
+- exec:
+    client.0:
+      - ceph_test_osd_memory_target_compliance
+    mon.b:
+      - ceph_test_osd_memory_target_compliance
+benchload:
+- parallel:
+  - radosbench:
+      clients: [client.0]
+      time: 270
+  - radosbench:
+      clients: [client.1]
+      time: 270
+  - radosbench:
+      clients: [client.2]
+      time: 270
+thrashit:
+- thrashosds:
+    op_delay: 1
+    bdev_inject_crash: 1
+    bdev_inject_crash_probability: .8
+    chance_down: 80
+    chance_pgnum_grow: 3
+    chance_pgpnum_fix: 1
+    chance_thrash_cluster_full: 0
+    chance_thrash_pg_upmap: 3
+    chance_thrash_pg_upmap_items: 3
+    min_in: 2

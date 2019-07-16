@@ -69,6 +69,7 @@ if(WITH_FIO OR WITH_SYSTEM_FIO)
   add_subdirectory(fio)
 endif()
 add_subdirectory(lazy-omap-stats)
+add_subdirectory(osd_memory_target_compliance)
 
 # test_timers
 add_executable(ceph_test_timers
