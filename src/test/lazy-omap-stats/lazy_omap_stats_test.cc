@@ -30,6 +30,7 @@
 
 using namespace std;
 namespace bp = boost::process;
+using boost::regex;
 
 void LazyOmapStatsTest::init(const int argc, const char** argv)
 {
@@ -185,9 +186,9 @@ void LazyOmapStatsTest::scrub() const
 
 const int LazyOmapStatsTest::find_matches(string& output, regex& reg) const
 {
-  sregex_iterator cur(output.begin(), output.end(), reg);
+  boost::sregex_iterator cur(output.begin(), output.end(), reg);
   uint x = 0;
-  for (auto end = std::sregex_iterator(); cur != end; ++cur) {
+  for (auto end = boost::sregex_iterator(); cur != end; ++cur) {
     cout << (*cur)[1].str() << endl;
     x++;
   }
@@ -220,7 +221,7 @@ void LazyOmapStatsTest::check_one()
       "\n"
       R"((PG_STAT[\s\S]*)"
       "\n)OSD_STAT"); // Strip OSD_STAT table so we don't find matches there
-  smatch match;
+  boost::smatch match;
   regex_search(full_output, match, reg);
   auto truncated_output = match[1].str();
   cout << truncated_output << endl;
@@ -266,7 +267,7 @@ void LazyOmapStatsTest::check_one()
 const int LazyOmapStatsTest::find_index(string& haystack, regex& needle,
                                         string label) const
 {
-  smatch match;
+  boost::smatch match;
   regex_search(haystack, match, needle);
   auto line = match[1].str();
   boost::algorithm::trim(line);
@@ -353,7 +354,7 @@ const string LazyOmapStatsTest::get_pool_id(string& pool)
 
   string poolregstring = R"(pool\s(\d+)\s')" + pool + "'";
   regex reg(poolregstring);
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto pool_id = match[1].str();
   cout << "Found pool ID: " << pool_id << endl;
@@ -378,7 +379,7 @@ void LazyOmapStatsTest::check_pg_dump()
       "\n"
       R"((PG_STAT[\s\S]*))"
       "\n +\n[0-9]";
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto table = match[1].str();
 
@@ -409,7 +410,7 @@ void LazyOmapStatsTest::check_pg_dump_summary()
       "\n"
       R"((sum\s.*))"
       "\n";
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto table = match[1].str();
 
@@ -435,7 +436,7 @@ void LazyOmapStatsTest::check_pg_dump_pgs()
 
   reg = R"(^(PG_STAT[\s\S]*))"
         "\n\n";
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto table = match[1].str();
 
@@ -467,7 +468,7 @@ void LazyOmapStatsTest::check_pg_dump_pools()
       pool_id +
       R"(\s.*))"
       "\n";
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto line = match[1].str();
 
@@ -493,7 +494,7 @@ void LazyOmapStatsTest::check_pg_ls()
 
   reg = R"(^(PG[\s\S]*))"
         "\n\n";
-  smatch match;
+  boost::smatch match;
   regex_search(dump_output, match, reg);
   auto table = match[1].str();
 
@@ -525,7 +526,7 @@ void LazyOmapStatsTest::wait_for_active_clean()
           "\n");
       index = find_index(dump_output, ireg, "STATE");
     }
-    smatch match;
+    boost::smatch match;
     regex_search(dump_output, match, reg);
     istringstream buffer(match[1].str());
     string line;
