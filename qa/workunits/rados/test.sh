@@ -8,9 +8,35 @@ color=""
 [ -t 1 ] && color="--gtest_color=yes"
 
 function cleanup() {
-    pkill -P $$ || true
+    pkill -P --signal SIGSEGV $$ || true
 }
 trap cleanup EXIT ERR HUP INT QUIT
+
+{
+  sleep 2h
+  echo "Internal timeout expired"
+  readarray -t pids <<< $(pgrep -P $$)
+  for x in "${pids[@]}"
+  do
+    if [[ $(ps -p $x -o command=) == *ceph_test_rados_* ]]; then
+      readarray -t subpids <<< $(pgrep -P $x)
+      # Kill any ceph tests that are still running with SIGSEGV so we get a
+      # trace and a coredump
+      for y in "${subpids[@]}"
+      do
+        comm=$(ps -p $y -o command= |awk '{print $1}')
+        if [[ $comm == ceph_test_rados_* ]]; then
+          echo "Sending SIGSEGV to " $comm
+          kill -SIGSEGV $y || true
+        fi
+      done
+    fi
+  done
+  # Trigger cleanup
+  kill -SIGHUP $$ || true
+} &
+
+echo "Hi from modified rados/test.sh"
 
 declare -A pids
 
